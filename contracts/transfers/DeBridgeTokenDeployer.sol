@@ -95,6 +95,7 @@ contract DeBridgeTokenDeployer is
         if (getDeployedAssetAddress[_debridgeId] != address(0)) revert DeployedAlready();
 
         OverridedTokenInfo memory overridedToken = overridedTokens[_debridgeId];
+        // TODO: when .accept is set?
         if (overridedToken.accept) {
             _name = overridedToken.name;
             _symbol = overridedToken.symbol;
@@ -137,6 +138,7 @@ contract DeBridgeTokenDeployer is
         );
     }
 
+    // TODO: Why the following contract doesn't inherit from IBeacon?
     /// @dev Beacon getter for the deBridgeToken contracts
     function implementation() public view returns (address) {
         return tokenImplementation;

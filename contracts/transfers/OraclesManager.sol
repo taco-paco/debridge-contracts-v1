@@ -11,6 +11,7 @@ contract OraclesManager is Initializable, AccessControlUpgradeable, IOraclesMana
     /* ========== STATE VARIABLES ========== */
 
     /// @dev Minimal required confirmations
+    // TODO: Shall minConfirmations be more than a half of oracleAddresses?
     uint8 public minConfirmations;
     /// @dev Minimal required confirmations in case of too many confirmations
     uint8 public excessConfirmations;
@@ -49,6 +50,7 @@ contract OraclesManager is Initializable, AccessControlUpgradeable, IOraclesMana
     /// @dev Constructor that initializes the most important configurations.
     /// @param _minConfirmations Minimal required confirmations.
     /// @param _excessConfirmations Minimal required confirmations in case of too many confirmations.
+    // TODO: Why doesn's conform CLASS_INIT & CLASS_INIT_UMCHAINED PATTERN?
     function initialize(uint8 _minConfirmations, uint8 _excessConfirmations) internal {
         if (_minConfirmations == 0 || _excessConfirmations < _minConfirmations) revert LowMinConfirmations();
         minConfirmations = _minConfirmations;
@@ -68,6 +70,7 @@ contract OraclesManager is Initializable, AccessControlUpgradeable, IOraclesMana
     /// @dev Sets minimal required confirmations in case of too many confirmations.
     /// @param _excessConfirmations Minimal required confirmations in case of too many confirmations.
     function setExcessConfirmations(uint8 _excessConfirmations) external onlyAdmin {
+        // TODO: what if setExcessConfirmations called with (value 0) before setMinConfirmations
         if (_excessConfirmations < minConfirmations) revert LowMinConfirmations();
         excessConfirmations = _excessConfirmations;
     }
@@ -122,6 +125,8 @@ contract OraclesManager is Initializable, AccessControlUpgradeable, IOraclesMana
         }
         if (oracleInfo.isValid && !_isValid) {
             // remove oracle from oracleAddresses array without keeping an order
+            // TODO: What oracleAddresses used for? Looks like getOracleInfo can provide all info.
+            // Can oracleAddresses be substituted with counter of valid oracles?
             for (uint256 i = 0; i < oracleAddresses.length; i++) {
                 if (oracleAddresses[i] == _oracle) {
                     oracleAddresses[i] = oracleAddresses[oracleAddresses.length - 1];

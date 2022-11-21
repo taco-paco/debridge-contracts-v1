@@ -675,6 +675,7 @@ contract DeBridgeGate is
             uint256 deadline = _permit.toUint256(0);
             (bytes32 r, bytes32 s, uint8 v) = _permit.parseSignature(32);
             IERC20Permit(_tokenAddress).permit(
+                // TODO: why restrict only for sender? One could pass it in _permit
                 msg.sender,
                 address(this),
                 _amount,
@@ -685,6 +686,30 @@ contract DeBridgeGate is
         }
 
         TokenInfo memory nativeTokenInfo = getNativeInfo[_tokenAddress];
+        // TODO: Isn't absence of token in mapping means that !debridge.exist.
+        // Since debridgeID is defined by chainID & tokenAddress
+        // Why not call _addAsset after? Could logic from L. 713-744  be simplified like this?
+        // {
+        //     uint256 memory chainId = getChainId();
+        //     if (nativeTokenInfo.nativeChainId == 0 || nativeTokenInfo.nativeChainId == getChainId())
+        //     {
+        //         address assetAddress = _tokenAddress == address(0) ? address(weth) : _tokenAddress;
+        //         debridgeId = getDebridgeId(chainId, assetAddress);
+        //         if(nativeTokenInfo.nativeChainId == 0) {
+        //             _addAsset(debridgeId, assetAddress, abi.encodePacked(assetAddress), chainId);
+        //         }
+        //     } else {
+        //         debridgeId = getbDebridgeId(
+        //             nativeTokenInfo.nativeChainId,
+        //             nativeTokenInfo.nativeAddress
+        //         );
+                
+        //         if (!getDebridge[debridgeId].exist) {
+        //             revert DebridgeNotFound();
+        //         }
+        //     }
+        // }
+
         bool isNativeToken = nativeTokenInfo.nativeChainId  == 0
             ? true // token not in mapping
             : nativeTokenInfo.nativeChainId == getChainId(); // token native chain id the same

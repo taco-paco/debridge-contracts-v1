@@ -74,6 +74,9 @@ contract SignatureVerifier is OraclesManager, ISignatureVerifier {
             (bytes32 r, bytes32 s, uint8 v) = _signatures.parseSignature(i * 65);
             address oracle = ecrecover(_submissionId.getUnsignedMsg(), v, r, s);
             if (getOracleInfo[oracle].isValid) {
+                // TODO: Is this loop to check if duplicate oracles were passed?
+                // Why not to use hashmap before? Apprently there're less than 256 of them
+                // Otherwise confirmations will overflow
                 for (uint256 k = 0; k < i; k++) {
                     if (validators[k] == oracle) revert DuplicateSignatures();
                 }
@@ -86,6 +89,9 @@ contract SignatureVerifier is OraclesManager, ISignatureVerifier {
                 }
                 if (
                     confirmations >= needConfirmations &&
+                    // TODO: isn't currentRequiredOraclesCount == requiredOraclesCount enough?
+                    // currentRequiredOraclesCount can't be larger than requiredOraclesCount
+                    // If this happens probably shall revert as state became invalid
                     currentRequiredOraclesCount >= requiredOraclesCount
                 ) {
                     break;
@@ -105,7 +111,10 @@ contract SignatureVerifier is OraclesManager, ISignatureVerifier {
             }
             emit SubmissionApproved(_submissionId);
         }
-
+        
+        // TODO: What is the case for this? Why compared against excessConfirmations?
+        // Also block prioir to num confirmationThreshold will not be checked
+        // Is that ok?
         if (submissionsInBlock > confirmationThreshold) {
             if (confirmations < excessConfirmations) revert NotConfirmedThreshold();
         }
@@ -140,6 +149,7 @@ contract SignatureVerifier is OraclesManager, ISignatureVerifier {
     {
         (bytes32 r, bytes32 s, uint8 v) = _signature.splitSignature();
         address oracle = ecrecover(_submissionId.getUnsignedMsg(), v, r, s);
+        // TODO: Shalln't it be getOracleInfo[oracle].exist?
         return getOracleInfo[oracle].isValid;
     }
 
