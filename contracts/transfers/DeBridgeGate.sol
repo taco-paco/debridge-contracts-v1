@@ -307,6 +307,7 @@ contract DeBridgeGate is
         emit Flash(msg.sender, _tokenAddress, _receiver, _amount, paid);
     }
 
+    // TODO: anyone can deploy new asset?
     /// @dev Deploy a deToken(DeBridgeTokenProxy) for an asset
     /// @param _nativeTokenAddress A token address on a native chain
     /// @param _nativeChainId The token native chain's id
@@ -660,6 +661,9 @@ contract DeBridgeGate is
         bytes memory _permit,
         address _tokenAddress,
         uint256 _amount,
+        // TODO: why do we need _chainIdTo if we can extract
+        // it from getNativeInfo[_tokenAddress].nativeChainId?
+        // or use current chainId if it is native transfer
         uint256 _chainIdTo,
         bool _useAssetFee
     ) internal returns (
@@ -668,6 +672,11 @@ contract DeBridgeGate is
         FeeParams memory feeParams
     ) {
         _validateToken(_tokenAddress);
+
+        // TODO: is there a reason why this comes before checking
+        // if asset is added for current chainId(Lines 722-752)
+        // Looks like if _tokenAddress isn't added for current chain
+        // revert will happen with DebridgeNotFound error
 
         // Run _permit first. Avoid Stack too deep
         if (_permit.length > 0) {
@@ -772,6 +781,8 @@ contract DeBridgeGate is
                     // collect asset fixed fee (in weth) for native token transfers
                     assetsFixedFee = chainFees.fixedNativeFee == 0 ? globalFixedNativeFee : chainFees.fixedNativeFee;
                 } else {
+                    // TODO: this else also applies for case nativeTokenInfo.nativeChainId == getChainId()?
+                    // Same question for if-block on L. 757
                     // collect asset fixed fee for non native token transfers
                     assetsFixedFee = debridgeFee.getChainFee[_chainIdTo];
                     if (assetsFixedFee == 0) revert NotSupportedFixedFee();
