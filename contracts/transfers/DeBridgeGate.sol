@@ -954,16 +954,11 @@ contract DeBridgeGate is
             && _autoParams.flags.getFlag(Flags.UNWRAP_ETH)
             && _token == address(weth);
 
-        if (_autoParams.executionFee > 0) {
-            _mintOrTransfer(_token, msg.sender, _autoParams.executionFee, isNativeToken);
-        }
-        if (_autoParams.data.length > 0) {
-            // use local variable to reduce gas usage
-            address _callProxy = callProxy;
-            bool status;
-            if (unwrapETH) {
-                // withdraw weth to callProxy directly
-                _withdrawWeth(_callProxy, _amount);
+        _mintOrTransfer(_token, msg.sender, _autoParams.executionFee, isNativeToken);
+        
+        if (unwrapETH) {
+            _withdrawWeth(_callProxy, _amount);
+            if(_autoParams.data.length > 0){ 
                 status = ICallProxy(_callProxy).call(
                     _autoParams.fallbackAddress,
                     _receiver,
@@ -972,10 +967,12 @@ contract DeBridgeGate is
                     _autoParams.nativeSender,
                     _chainIdFrom
                 );
-            }
-            else {
-                _mintOrTransfer(_token, _callProxy, _amount, isNativeToken);
 
+                emit AutoRequestExecuted(_submissionId, status, _callProxy);
+            }
+        } else {
+            _mintOrTransfer(_token, _callProxy, _amount, isNativeToken);
+            if(_autoParams.data.length > 0){ 
                 status = ICallProxy(_callProxy).callERC20(
                     _token,
                     _autoParams.fallbackAddress,
@@ -985,20 +982,11 @@ contract DeBridgeGate is
                     _autoParams.nativeSender,
                     _chainIdFrom
                 );
+
+                emit AutoRequestExecuted(_submissionId, status, _callProxy);
             }
-            emit AutoRequestExecuted(_submissionId, status, _callProxy);
-        } else if (unwrapETH) {
-            // transferring WETH with unwrap flag
-            _withdrawWeth(_receiver, _amount);
-        } else {
-            _mintOrTransfer(_token, _receiver, _amount, isNativeToken);
         }
 
-        emit MonitoringClaimEvent(
-            _submissionId,
-            debridge.balance,
-            IERC20Upgradeable(debridge.tokenAddress).totalSupply()
-        );
     }
 
     function _mintOrTransfer(
