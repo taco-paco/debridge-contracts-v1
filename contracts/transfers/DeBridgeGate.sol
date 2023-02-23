@@ -986,7 +986,6 @@ contract DeBridgeGate is
                 emit AutoRequestExecuted(_submissionId, status, _callProxy);
             }
         }
-
     }
 
     function _mintOrTransfer(
